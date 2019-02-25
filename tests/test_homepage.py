@@ -1,11 +1,8 @@
-import random
-
 import pytest
 from _pytest.fixtures import FixtureRequest
 
 from client.web_driver_client import WebDriverClient
 from pages.homepage import Homepage
-from utils.constants import JobType, CityType
 
 
 class TestHomepage:
@@ -32,18 +29,12 @@ class TestHomepage:
             self.webdriver_client.quit()
 
     @pytest.mark.parametrize(
-        'another',
-        [1]
+        'address',
+        ['12345 Heaven Ave, Oakland, CA 99876']
     )
     def test_perform_one_super_basic_search_without_checking_search_results(
             self,
             output: str,
-            another: int
+            address: str
     ):
-        print(f'output: {output}')
-        # self.homepage.open()
-        # job = random.choice(JobType.JOBS)
-        # city = random.choice(CityType.CITIES)
-        # self.homepage.type_in_what(job)
-        # self.homepage.type_in_where(city)
-        # self.homepage.click_find_jobs_button()
+        print(f'output: {output}, address: {address}')
