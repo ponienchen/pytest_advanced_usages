@@ -5,15 +5,15 @@ from client.web_driver_client import WebDriverClient
 from pages.homepage import Homepage
 
 
-class TestHomepage:
+class TestTwo:
 
-    # local = [
-    #     'Dummy-Link'
-    # ]
+    local = [
+        'Dummy-Link'
+    ]
 
     @pytest.fixture(name='output')
     def selenium_fixture(self, request: FixtureRequest) -> str:
-        output = f'\n-- {request.param} --'
+        output = f'-- {request.param} --'
         return output
 
     @pytest.fixture(autouse=True)
@@ -32,9 +32,14 @@ class TestHomepage:
         'address',
         ['12345 Heaven Ave, Oakland, CA 99876']
     )
-    def test_perform_one_super_basic_search_without_checking_search_results(
+    def test_do_a_lot(
             self,
             output: str,
             address: str
     ):
-        print(f'output: {output}, address: {address}')
+        print('\ntest that does a lot')
+        print(f'output: {output}, address: {address}\n')
+
+    @pytest.mark.usefixtures('output')
+    def test_do_little(self):
+        print('\ntest that does little\n')

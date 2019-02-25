@@ -4,6 +4,7 @@
 import pytest
 from _pytest.fixtures import FixtureRequest
 from _pytest.python import Function
+from _pytest.reports import TestReport
 
 
 def pytest_addoption(parser):
@@ -38,7 +39,7 @@ def pytest_generate_tests(metafunc):
     )
 
 
-def pytest_collection_modifyitems(session, config, items: [Function]):
+def pytest_collection_modifyitems(config, items: [Function]):
     deselected = []
     selected = []
     for item in items:
@@ -52,7 +53,7 @@ def pytest_collection_modifyitems(session, config, items: [Function]):
 
 
 @pytest.mark.hookwrapper
-def pytest_runtest_makereport(item, call):
+def pytest_runtest_makereport(item):
     pytest_html = item.config.pluginmanager.getplugin('html')
     outcome = yield
     rep = outcome.get_result()
@@ -61,18 +62,42 @@ def pytest_runtest_makereport(item, call):
         if item.get_closest_marker('interface_missing'):
             rep.sections.append(
                 (
-                    'Warning',
+                    '========== Warning ==========',
                     f'There are missing interfaces. Please be sure to define local/remote in '
-                    f'your test class(es)\n',
-                )
-            )
-            rep.sections.append(
-                (
-                    'How to set up local/remote in your test class(es)?',
-                    f'local = [LocalDesktopInterface.chrome]\n'
-                    f'remote = [RemoteDesktopInterface.chrome]',
+                    f'your test class(es)\n\n'
+                    f'Example:\n'
+                    f'  local = [\n'
+                    f'      LocalDesktopInterface.chrome\n'
+                    f'  ]\n'
+                    f'  remote = [\n'
+                    f'      RemoteDesktopInterface.chrome\n'
+                    f'  ]\n'
                 )
             )
             extra.append(pytest_html.extras.url('http://www.example.com/'))
             extra.append(pytest_html.extras.text('This is Peter\'s Texts'))
             rep.extra = extra
+
+
+def pytest_terminal_summary(terminalreporter):
+    target_reports = []
+    for report_list in terminalreporter.stats.values():
+        for rep in report_list:
+            if (
+                    'interface_missing' in list(rep.keywords)
+                    and isinstance(rep, TestReport)
+                    and rep.when == 'setup'
+            ):
+                target_reports.extend([rep])
+    if not target_reports:
+        return
+
+    terminalreporter.write_line('')
+    terminalreporter.write_sep('=', 'Interface Missing Warning')
+    terminalreporter.write_line(f'Total affected tests count: {len(target_reports)}\n')
+    for rep in target_reports:
+        terminalreporter.write_line(f'{rep.nodeid}')
+        for sec in rep.sections:
+            for text in sec:
+                terminalreporter.write_line(text)
+        terminalreporter.write_line('')
